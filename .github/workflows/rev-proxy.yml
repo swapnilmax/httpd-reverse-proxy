@@ -1,0 +1,25 @@
+name: Deploy Apache Configuration
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to Server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > /tmp/private_key
+          chmod 600 /tmp/private_key
+          
+          # Deploy to your server
+          scp -i /tmp/private_key reverse-proxy.conf user@192.168.1.45:/etc/httpd/conf.d/
+          ssh -i /tmp/private_key centos@192.168.1.45 "sudo systemctl restart httpd"
