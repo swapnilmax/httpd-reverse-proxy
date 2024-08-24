@@ -1,0 +1,30 @@
+name: Debug SSH Connection
+
+on:
+  workflow_dispatch:  # This allows you to manually trigger the workflow from GitHub Actions UI
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Test connectivity to VM
+        run: ping -c 4 192.168.1.45  # Replace with your VM's IP address
+
+      - name: Test SSH connection
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > /tmp/private_key
+          chmod 600 /tmp/private_key
+          
+          ssh -o StrictHostKeyChecking=no -i /tmp/private_key centos@192.168.1.45 "echo 'SSH Connection Successful'"
+
+      - name: Print current directory
+        run: pwd
+
+      - name: List files in directory
+        run: ls -al
