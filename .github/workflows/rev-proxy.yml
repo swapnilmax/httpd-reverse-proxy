@@ -15,12 +15,20 @@ jobs:
 
       - name: Set up SSH
         run: |
+          # Create private key file
           echo "$SSH_PRIVATE_KEY" > /tmp/private_key
           chmod 600 /tmp/private_key
-          
-          # Create known_hosts file
+
+          # Ensure the .ssh directory exists
           mkdir -p ~/.ssh
+
+          # Create known_hosts file
           ssh-keyscan -H 18.209.180.131 >> ~/.ssh/known_hosts
+
+      - name: Test SSH Connection
+        run: |
+          ssh -i /tmp/private_key -o StrictHostKeyChecking=no ec2-user@18.209.180.131 "echo SSH connection successful"
+        continue-on-error: true  # To continue even if SSH fails (for debugging purposes)
 
       - name: Deploy to Server
         run: |
@@ -28,3 +36,8 @@ jobs:
           ssh -i /tmp/private_key ec2-user@18.209.180.131 "sudo systemctl restart httpd"
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Verify Deployment
+        run: |
+          ssh -i /tmp/private_key ec2-user@18.209.180.131 "ls -l /etc/httpd/conf.d/reverse-proxy.conf"
+        continue-on-error: true  # To continue even if verification fails (for debugging purposes)
