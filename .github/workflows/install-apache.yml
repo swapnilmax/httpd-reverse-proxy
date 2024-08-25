@@ -1,0 +1,34 @@
+name: Install Apache HTTPD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  install-httpd:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install HTTPD on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            # Update package list and install httpd
+            sudo yum update -y
+            sudo yum install -y httpd
+
+            # Start and enable httpd service
+            sudo systemctl start httpd
+            sudo systemctl enable httpd
+
+            # Verify the installation and service status
+            sudo systemctl status httpd
+            curl http://localhost
