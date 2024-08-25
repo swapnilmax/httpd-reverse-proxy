@@ -19,12 +19,12 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > /tmp/private_key
           chmod 600 /tmp/private_key
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.HOST_DNS }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.HOST_IP }} >> ~/.ssh/known_hosts
 
       - name: Deploy Reverse Proxy Configuration to EC2
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.HOST_DNS }}
+          host: ${{ secrets.HOST_IP }}
           username: ${{ secrets.USERNAME }}
           key: /tmp/private_key
           source: "reverse-proxy.conf"
@@ -33,7 +33,7 @@ jobs:
       - name: Configure Apache for Reverse Proxy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST_DNS }}
+          host: ${{ secrets.HOST_IP }}
           username: ${{ secrets.USERNAME }}
           key: /tmp/private_key
           script: |
