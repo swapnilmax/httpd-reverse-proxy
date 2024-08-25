@@ -17,7 +17,7 @@ jobs:
 
       - name: Set up SSH Key and Known Hosts
         run: |
-          echo "$SSH_PRIVATE_KEY" > /tmp/private_key
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/private_key
           chmod 600 /tmp/private_key
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.HOST_DNS }} >> ~/.ssh/known_hosts
@@ -27,7 +27,7 @@ jobs:
         with:
           host: ${{ secrets.HOST_DNS }}
           username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: /tmp/private_key
           source: "reverse-proxy.conf"
           target: "/tmp/reverse-proxy.conf"
 
@@ -36,8 +36,9 @@ jobs:
         with:
           host: ${{ secrets.HOST_DNS }}
           username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: /tmp/private_key
           script: |
             sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/
             sudo systemctl restart httpd
             sudo systemctl status httpd
+
