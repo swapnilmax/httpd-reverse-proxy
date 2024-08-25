@@ -22,21 +22,13 @@ jobs:
           ssh-keyscan -H ${{ secrets.HOST_IP }} >> ~/.ssh/known_hosts
 
       - name: Deploy Reverse Proxy Configuration to EC2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST_IP }}
-          username: ${{ secrets.USERNAME }}
-          key: /tmp/private_key
-          source: "reverse-proxy.conf"
-          target: "/tmp/reverse-proxy.conf"
+        run: |
+          scp -i /tmp/private_key -o StrictHostKeyChecking=no reverse-proxy.conf ec2-user@${{ secrets.HOST_IP }}:/tmp/reverse-proxy.conf
 
       - name: Configure Apache for Reverse Proxy
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST_IP }}
-          username: ${{ secrets.USERNAME }}
-          key: /tmp/private_key
-          script: |
+        run: |
+          ssh -i /tmp/private_key -o StrictHostKeyChecking=no ec2-user@${{ secrets.HOST_IP }} << 'EOF'
             sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/
             sudo systemctl restart httpd
             sudo systemctl status httpd
+          EOF
