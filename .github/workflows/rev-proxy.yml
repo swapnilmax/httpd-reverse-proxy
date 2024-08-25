@@ -1,5 +1,6 @@
-name: Deploy Apache Configuration
+name: Deploy-Reverse-Proxy
 
+# Trigger the deployment when code is pushed to the main branch
 on:
   push:
     branches:
@@ -7,26 +8,36 @@ on:
 
 jobs:
   deploy:
+    name: Deploy Reverse Proxy Configuration
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout the repository
         uses: actions/checkout@v3
 
-      - name: Set up SSH
+      - name: Set up SSH Key and Known Hosts
         run: |
           echo "$SSH_PRIVATE_KEY" > /tmp/private_key
           chmod 600 /tmp/private_key
-
-          # Create known_hosts file
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.HOST_DNS }} >> ~/.ssh/known_hosts
 
-      - name: Test SSH Connection
-        run: |
-          ssh -i /tmp/private_key -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }} "echo SSH connection successful"
+      - name: Deploy Reverse Proxy Configuration to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST_DNS }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "reverse-proxy.conf"
+          target: "/tmp/reverse-proxy.conf"
 
-      - name: Deploy to Server
-        run: |
-          scp -i /tmp/private_key -o StrictHostKeyChecking=no reverse-proxy.conf ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }}:/etc/httpd/conf.d/
-          ssh -i /tmp/private_key -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }} "sudo systemctl restart httpd"
+      - name: Configure Apache for Reverse Proxy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST_DNS }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/
+            sudo systemctl restart httpd
+            sudo systemctl status httpd
