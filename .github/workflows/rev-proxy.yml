@@ -21,5 +21,5 @@ jobs:
           chmod 600 /tmp/private_key
           
           # Deploy to your server
-          scp -i /tmp/private_key reverse-proxy.conf centos@192.168.1.45:/etc/httpd/conf.d/
-          ssh -i /tmp/private_key centos@192.168.1.45 "sudo systemctl restart httpd"
+          scp -i /tmp/private_key reverse-proxy.conf centos@192.168.1.46:/etc/httpd/conf.d/
+          ssh -i /tmp/private_key centos@192.168.1.46 "sudo systemctl restart httpd"
