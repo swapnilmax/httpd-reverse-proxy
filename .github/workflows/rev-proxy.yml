@@ -13,13 +13,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy to Server
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Set up SSH
         run: |
           echo "$SSH_PRIVATE_KEY" > /tmp/private_key
           chmod 600 /tmp/private_key
           
-          # Deploy to your server
+          # Create known_hosts file
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 18.209.180.131 >> ~/.ssh/known_hosts
+
+      - name: Deploy to Server
+        run: |
           scp -i /tmp/private_key reverse-proxy.conf ec2-user@18.209.180.131:/etc/httpd/conf.d/
           ssh -i /tmp/private_key ec2-user@18.209.180.131 "sudo systemctl restart httpd"
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
