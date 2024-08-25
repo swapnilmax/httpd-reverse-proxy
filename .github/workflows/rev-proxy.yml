@@ -21,8 +21,11 @@ jobs:
           key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            # Copy the reverse-proxy.conf file to the EC2 instance
-            scp -i ${{ secrets.KEY }} -P ${{ secrets.PORT }} ./reverse-proxy.conf ${{ secrets.USER }}@${{ secrets.HOST }}:/tmp/reverse-proxy.conf
+            # Check if the reverse-proxy.conf file exists
+            if [ ! -f /tmp/reverse-proxy.conf ]; then
+              echo "File /tmp/reverse-proxy.conf not found. Exiting."
+              exit 1
+            fi
             
             # Move the configuration file to the Apache configuration directory
             sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/reverse-proxy.conf
