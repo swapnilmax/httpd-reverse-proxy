@@ -1,4 +1,4 @@
-name: Deploy-Reverse-Proxy
+name: Configure Reverse Proxy
 
 on:
   push:
@@ -7,41 +7,25 @@ on:
 
 jobs:
   deploy:
-    name: Deploy Reverse Proxy Configuration
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout the repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up SSH Key and Known Hosts
-        run: |
-          # Write SSH private key to a file
-          echo "$SSH_PRIVATE_KEY" > /tmp/private_key
-          
-          # Set correct permissions for the SSH private key
-          chmod 600 /tmp/private_key
-          
-          # Set up known_hosts to avoid SSH authenticity warnings
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.HOST_IP }} >> ~/.ssh/known_hosts
-
-      - name: Deploy Reverse Proxy Configuration to EC2
-        uses: appleboy/scp-action@v0.1.0
+      - name: SSH deploy
+        uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST_IP }}
-          username: ${{ secrets.USERNAME }}
-          key: /tmp/private_key
-          source: "reverse-proxy.conf"
-          target: "/tmp/reverse-proxy.conf"
-
-      - name: Configure Apache for Reverse Proxy
-        uses: appleboy/ssh-action@v0.1.0
-        with:
-          host: ${{ secrets.HOST_IP }}
-          username: ${{ secrets.USERNAME }}
-          key: /tmp/private_key
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
           script: |
-            sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/
-            sudo systemctl restart httpd
-            sudo systemctl status httpd
+            # Copy the reverse-proxy.conf file to the EC2 instance
+            scp -i ${{ secrets.KEY }} -P ${{ secrets.PORT }} ./reverse-proxy.conf ${{ secrets.USER }}@${{ secrets.HOST }}:/tmp/reverse-proxy.conf
+            
+            # Move the configuration file to the Apache configuration directory
+            ssh -i ${{ secrets.KEY }} -p ${{ secrets.PORT }} ${{ secrets.USER }}@${{ secrets.HOST }} 'sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/reverse-proxy.conf'
+            
+            # Restart Apache HTTPD to apply the new configuration
+            ssh -i ${{ secrets.KEY }} -p ${{ secrets.PORT }} ${{ secrets.USER }}@${{ secrets.HOST }} 'sudo systemctl restart httpd'
