@@ -13,7 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: SSH deploy
+      - name: Configure Reverse Proxy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -25,7 +25,7 @@ jobs:
             scp -i ${{ secrets.KEY }} -P ${{ secrets.PORT }} ./reverse-proxy.conf ${{ secrets.USER }}@${{ secrets.HOST }}:/tmp/reverse-proxy.conf
             
             # Move the configuration file to the Apache configuration directory
-            ssh -i ${{ secrets.KEY }} -p ${{ secrets.PORT }} ${{ secrets.USER }}@${{ secrets.HOST }} 'sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/reverse-proxy.conf'
+            sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/reverse-proxy.conf
             
             # Restart Apache HTTPD to apply the new configuration
-            ssh -i ${{ secrets.KEY }} -p ${{ secrets.PORT }} ${{ secrets.USER }}@${{ secrets.HOST }} 'sudo systemctl restart httpd'
+            sudo systemctl restart httpd
