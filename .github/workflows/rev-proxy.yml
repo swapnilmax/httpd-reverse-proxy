@@ -14,21 +14,22 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v3
 
-      - name: Set up SSH Key and Known Hosts
-        run: |
-          echo "$SSH_PRIVATE_KEY" > /tmp/private_key
-          chmod 600 /tmp/private_key
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.HOST_IP }} >> ~/.ssh/known_hosts
-
       - name: Deploy Reverse Proxy Configuration to EC2
-        run: |
-          scp -i /tmp/private_key -o StrictHostKeyChecking=no reverse-proxy.conf ec2-user@${{ secrets.HOST_IP }}:/tmp/reverse-proxy.conf
+        uses: appleboy/scp-action@v0.1.0
+        with:
+          host: ${{ secrets.HOST_IP }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "reverse-proxy.conf"
+          target: "/tmp/reverse-proxy.conf"
 
       - name: Configure Apache for Reverse Proxy
-        run: |
-          ssh -i /tmp/private_key -o StrictHostKeyChecking=no ec2-user@${{ secrets.HOST_IP }} << 'EOF'
+        uses: appleboy/ssh-action@v0.1.0
+        with:
+          host: ${{ secrets.HOST_IP }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
             sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/
             sudo systemctl restart httpd
             sudo systemctl status httpd
-          EOF
