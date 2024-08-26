@@ -52,7 +52,7 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             # Move the configuration file to the Apache conf.d directory
-            sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/reverse-proxy.conf
+            sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/
 
             # Restart Apache HTTPD to apply the new configuration
             sudo systemctl restart httpd
