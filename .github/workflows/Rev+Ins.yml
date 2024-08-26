@@ -1,0 +1,58 @@
+name: Install Apache HTTPD and Configure Reverse Proxy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  install-httpd-configure-proxy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install HTTPD on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            # Update package list and install httpd
+            sudo yum update -y
+            sudo yum install -y httpd
+
+            # Start and enable httpd service
+            sudo systemctl start httpd
+            sudo systemctl enable httpd
+
+            # Verify the installation and service status
+            sudo systemctl status httpd
+            curl http://localhost
+
+      - name: Copy reverse-proxy.conf to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          source: reverse-proxy.conf
+          target: /tmp/reverse-proxy.conf
+
+      - name: Move reverse-proxy.conf to Apache configuration directory
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            # Move the configuration file to the Apache conf.d directory
+            sudo mv /tmp/reverse-proxy.conf /etc/httpd/conf.d/reverse-proxy.conf
+
+            # Restart Apache HTTPD to apply the new configuration
+            sudo systemctl restart httpd
