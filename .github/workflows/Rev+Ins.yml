@@ -41,7 +41,7 @@ jobs:
           key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT }}
           source: reverse-proxy.conf
-          target: /tmp/reverse-proxy.conf
+          target: /tmp/
 
       - name: Move reverse-proxy.conf to Apache configuration directory
         uses: appleboy/ssh-action@master
